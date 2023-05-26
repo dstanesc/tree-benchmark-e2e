@@ -12,6 +12,8 @@ function App() {
 
   const [valueSizeBytes, setValueSizeBytes] = useState([]);
 
+  const [stats, setStats] = useState(null);
+
   // local view
   const [sharedPropertyMap, setSharedPropertyMap] = useState();
 
@@ -85,11 +87,21 @@ function App() {
     const boxPlotTrace = boxPlot({ values });
     const histogramTrace = histogram({ values });
     const violinPlotTrace = violinPlot({ values });
-    const data = [scatterTrace];
-    Plotly.newPlot("plotDiv", data, layout());
-    Plotly.newPlot("boxDiv", [boxPlotTrace], {});
-    Plotly.newPlot("histDiv", [histogramTrace], {});
-    Plotly.newPlot("violinDiv", [violinPlotTrace], {});
+    Plotly.newPlot("plotDiv", [scatterTrace], layout("Measurements"));
+    var bd = document.getElementById("boxDiv");
+    Plotly.newPlot(bd, [boxPlotTrace], { title: "Statistics: Box Plot" });
+    Plotly.newPlot("histDiv", [histogramTrace], {
+      title: "Statistics: Histogram",
+    });
+    var vd = document.getElementById("violinDiv");
+    Plotly.newPlot(vd, [violinPlotTrace], { title: "Statistics: Violin" });
+    bd.on("plotly_hover", (evtData) => {
+      var calcData = bd.calcdata;
+      evtData.points.forEach((p) => {
+        var calcPt0 = calcData[p.curveNumber][0];
+        setStats(calcPt0);
+      });
+    });
     if (durations.size === 0) {
       setButton("Start e2e");
     } else if (durations.size > 95) {
@@ -212,12 +224,84 @@ function App() {
         [{button}]
       </div>
       <div className="message">
-        Latency {messageLatency()}, Payload {messageByteSize()}{" "}
+        Latency {messageLatency()}, Payload {messageByteSize()} {""}
       </div>
       <div id="plotDiv"></div>
       <div id="boxDiv"></div>
       <div id="histDiv"></div>
       <div id="violinDiv"></div>
+      <div id="statDiv">
+        {stats && (
+          <table className="stats">
+            <thead>
+              <tr>
+                <th>Stat</th>
+                <th>Category</th>
+                <th>Value (ms)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Min</td>
+                <td>Fences</td>
+                <td>{stats.min}</td>
+              </tr>
+              <tr>
+                <td>First quartile</td>
+                <td>Spread</td>
+                <td>{stats.q1}</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>Median</b>
+                </td>
+                <td>Central tendency</td>
+                <td>
+                  <b>{stats.med}</b>
+                </td>
+              </tr>
+              <tr>
+                <td>Mean</td>
+                <td>Central tendency</td>
+                <td>{stats.mean}</td>
+              </tr>
+              <tr>
+                <td>Upper quartile</td>
+                <td>Spread</td>
+                <td>{stats.q3}</td>
+              </tr>
+              <tr>
+                <td>Upper Fence</td>
+                <td>Fences</td>
+                <td>{stats.uf}</td>
+              </tr>
+              <tr>
+                <td>Max</td>
+                <td>Spread</td>
+                <td>{stats.max}</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>Whiskers</b>
+                </td>
+                <td>Range, non-outlier</td>
+                <td>
+                  <b>
+                    {stats.lf} - {stats.uf}
+                  </b>
+                </td>
+              </tr>
+              <tr>
+                <td>Outliers</td>
+                <td>Fences</td>
+                <td>
+                  {0} - {stats.uo}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

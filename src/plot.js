@@ -10,20 +10,21 @@ export function trace({ keys, values }) {
     };
 }
 
-export function layout() {
+export function layout(t) {
     return {
-        xaxis: {
-            title: {
-                text: 'Runs'
-            }
+      title: t,
+      xaxis: {
+        title: {
+          text: "Runs",
         },
-        yaxis: {
-            title: {
-                text: 'Latency (ms)'
-            }
-        }
+      },
+      yaxis: {
+        title: {
+          text: "Latency (ms)",
+        },
+      },
     };
-}
+  }
 
 export function boxPlot({ values }) {
     return {
